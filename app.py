@@ -154,6 +154,60 @@ def get_reviews():
         'media': media_nota,
         'avaliacoes': reviews
     }), 200
+    
+    
+@app.route('/search_words_reviews', methods=['GET'])
+def search_reviews():
+    """
+    Busca por uma palavra específica dentro das avaliações de um produto.
+    ---
+    tags:
+      - Reviews
+    parameters:
+      - name: produto_id
+        in: query
+        type: string
+        required: true
+        description: O ID do produto.
+      - name: palavra
+        in: query
+        type: string
+        required: true
+        description: A palavra a ser buscada dentro das avaliações.
+    responses:
+      200:
+        description: Uma lista de avaliações que contém a palavra buscada.
+        schema:
+          type: object
+          properties:
+            avaliacoes:
+              type: array
+              items:
+                type: object
+      400:
+        description: ID do produto ou palavra de busca é obrigatória.
+      500:
+        description: Erro de conexão com o banco de dados.
+    """
+    if collection is None:
+        return jsonify({'error': 'Erro de conexão com o banco de dados'}), 500
+
+    produto_id = request.args.get('produto_id')
+    palavra = request.args.get('palavra')
+
+    if not produto_id or not palavra:
+        return jsonify({'error': 'ID do produto e palavra de busca são obrigatórios'}), 400
+
+    # Obtém todas as avaliações para o produto
+    reviews = list(collection.find({'produto_id': produto_id}, {'_id': 0}).sort('data', -1))
+
+    # Filtra as avaliações que contêm a palavra no campo 'avaliacao'
+    filtered_reviews = [review for review in reviews if palavra.lower() in review['avaliacao'].lower()]
+
+    return jsonify({
+        'avaliacoes': filtered_reviews
+    }), 200
+
 
 if __name__ == '__main__':
     app.run(debug=True)
