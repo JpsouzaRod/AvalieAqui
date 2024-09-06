@@ -5,10 +5,21 @@ from flasgger import Swagger
 from dotenv import load_dotenv
 import cachetools
 import os
-from gemini2 import gerar_resumo
 from flask_cors import CORS
+import google.generativeai as genai
 
 load_dotenv()
+
+
+def prompt(comentarios):
+    return f"""{comentarios}
+    crie um resumo das avaliações do produto"""
+    
+def gerar_resumo(comentarios):
+    genai.configure(api_key=os.getenv('API_KEY'))
+    model = genai.GenerativeModel(model_name='gemini-1.5-flash')
+    response = model.generate_content(prompt(comentarios))
+    return response.text
 
 app = Flask(__name__)
 swagger = Swagger(app)
